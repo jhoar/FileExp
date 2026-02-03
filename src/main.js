@@ -11,7 +11,8 @@ const isJapanese = (value) => /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9faf]/.test(v
 const loadTranslateClient = async () => {
   if (translateClient) return translateClient;
   const module = await import('@vitalets/google-translate-api');
-  translateClient = module.default || module;
+  const candidate = module.default || module;
+  translateClient = candidate.translate || candidate;
   return translateClient;
 };
 
