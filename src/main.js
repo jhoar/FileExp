@@ -15,6 +15,8 @@ const loadTranslateClient = async () => {
   return translateClient;
 };
 
+const getTranslatorName = () => '@vitalets/google-translate-api';
+
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 1100,
@@ -102,11 +104,26 @@ ipcMain.handle('translate-filename', async (_event, filename) => {
   }
 
   try {
+    console.info('Translation request', {
+      original: filename,
+      baseName,
+      translator: getTranslatorName()
+    });
     const translate = await loadTranslateClient();
     const result = await translate(baseName, { to: 'en' });
+    console.info('Translation response', {
+      original: filename,
+      translated: result.text,
+      translator: getTranslatorName()
+    });
     translationCache.set(baseName, result.text);
     return { original: filename, translated: `${result.text}${extension}` };
   } catch (error) {
+    console.info('Translation error', {
+      original: filename,
+      translator: getTranslatorName(),
+      error: error.message
+    });
     return { original: filename, translated: null, error: error.message };
   }
 });
