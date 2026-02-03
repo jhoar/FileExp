@@ -61,6 +61,9 @@ const renderEntries = async (directory, entries) => {
     listItem.appendChild(translated);
 
     if (!entry.isDirectory) {
+      console.info('Translation request queued', {
+        original: entry.name
+      });
       window.fileExp.translateFilename(entry.name).then((result) => {
         if (result?.translated) {
           translated.textContent = result.translated;
@@ -70,7 +73,8 @@ const renderEntries = async (directory, entries) => {
           });
         } else {
           console.info('No translation for filename', {
-            original: entry.name
+            original: entry.name,
+            reason: result?.error ? 'error' : 'skipped'
           });
         }
       });

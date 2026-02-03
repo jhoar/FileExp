@@ -95,11 +95,22 @@ ipcMain.handle('translate-filename', async (_event, filename) => {
   const baseName = extension ? filename.slice(0, -extension.length) : filename;
 
   if (!isJapanese(baseName)) {
+    console.info('Translation skipped (no Japanese characters)', {
+      original: filename,
+      baseName,
+      translator: getTranslatorName()
+    });
     return { original: filename, translated: null };
   }
 
   if (translationCache.has(baseName)) {
     const cached = translationCache.get(baseName);
+    console.info('Translation cache hit', {
+      original: filename,
+      baseName,
+      translated: cached,
+      translator: getTranslatorName()
+    });
     return { original: filename, translated: cached ? `${cached}${extension}` : null };
   }
 
