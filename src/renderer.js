@@ -8,6 +8,7 @@ const saveConfigButton = document.getElementById('saveConfig');
 const status = document.getElementById('status');
 
 const STATE_KEY = 'fileexp_open_config';
+const TRANSLATION_CONFIG_KEY = 'fileexp_translation_config';
 
 const setStatus = (message, type = 'info') => {
   status.textContent = message;
@@ -23,6 +24,17 @@ const loadConfig = () => {
     programArgsInput.value = args || '';
   } catch (error) {
     console.warn('Failed to load config', error);
+  }
+};
+
+const loadTranslationConfig = () => {
+  const saved = window.localStorage.getItem(TRANSLATION_CONFIG_KEY);
+  if (!saved) return null;
+  try {
+    return JSON.parse(saved);
+  } catch (error) {
+    console.warn('Failed to load translation config', error);
+    return null;
   }
 };
 
@@ -150,6 +162,10 @@ currentPathInput.addEventListener('keydown', (event) => {
 
 const initialize = async () => {
   loadConfig();
+  const translationConfig = loadTranslationConfig();
+  if (translationConfig) {
+    await window.fileExp.setTranslationConfig(translationConfig);
+  }
   const initial = await window.fileExp.getInitialDirectory();
   await loadDirectory(initial);
 };

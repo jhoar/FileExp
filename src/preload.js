@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('fileExp', {
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   openFile: (payload) => ipcRenderer.invoke('open-file', payload),
   translateFilename: (filename) => ipcRenderer.invoke('translate-filename', filename),
-  getInitialDirectory: () => ipcRenderer.invoke('get-initial-directory')
+  getInitialDirectory: () => ipcRenderer.invoke('get-initial-directory'),
+  setTranslationConfig: (config) => ipcRenderer.invoke('set-translation-config', config)
 });
