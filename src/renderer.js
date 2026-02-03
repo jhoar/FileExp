@@ -64,6 +64,14 @@ const renderEntries = async (directory, entries) => {
       window.fileExp.translateFilename(entry.name).then((result) => {
         if (result?.translated) {
           translated.textContent = result.translated;
+          console.info('Translated filename', {
+            original: entry.name,
+            translated: result.translated
+          });
+        } else {
+          console.info('No translation for filename', {
+            original: entry.name
+          });
         }
       });
     }
