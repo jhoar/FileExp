@@ -56,14 +56,14 @@ const renderEntries = async (directory, entries) => {
 
     listItem.appendChild(nameSpan);
 
-    if (!entry.isDirectory) {
-      const translated = document.createElement('span');
-      translated.className = 'entry__translation';
-      listItem.appendChild(translated);
+    const translated = document.createElement('span');
+    translated.className = 'entry__translation';
+    listItem.appendChild(translated);
 
+    if (!entry.isDirectory) {
       window.fileExp.translateFilename(entry.name).then((result) => {
         if (result?.translated) {
-          translated.textContent = `(${result.translated})`;
+          translated.textContent = result.translated;
         }
       });
     }

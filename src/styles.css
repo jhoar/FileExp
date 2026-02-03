@@ -52,6 +52,17 @@ main {
   font-size: 14px;
 }
 
+.list-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(200px, 1fr);
+  gap: 16px;
+  padding: 8px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #57606a;
+}
+
 .status[data-type="error"] {
   color: #b42318;
 }
@@ -71,8 +82,9 @@ main {
 }
 
 .entry {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(200px, 1fr);
+  gap: 16px;
   padding: 10px 12px;
   border-bottom: 1px solid #e4e7eb;
   cursor: pointer;
@@ -93,5 +105,5 @@ main {
 .entry__translation {
   color: #6b7280;
   font-size: 12px;
-  padding-left: 12px;
+  text-align: right;
 }
