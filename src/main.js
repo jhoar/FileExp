@@ -3,11 +3,17 @@ const path = require('path');
 const fs = require('fs').promises;
 const { spawn } = require('child_process');
 const { parse } = require('shell-quote');
-const translate = require('@vitalets/google-translate-api');
-
 const translationCache = new Map();
+let translateClient = null;
 
 const isJapanese = (value) => /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9faf]/.test(value);
+
+const loadTranslateClient = async () => {
+  if (translateClient) return translateClient;
+  const module = await import('@vitalets/google-translate-api');
+  translateClient = module.default || module;
+  return translateClient;
+};
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -83,18 +89,23 @@ ipcMain.handle('open-file', async (_event, { filePath, program, args }) => {
 });
 
 ipcMain.handle('translate-filename', async (_event, filename) => {
-  if (!isJapanese(filename)) {
+  const extension = path.extname(filename);
+  const baseName = extension ? filename.slice(0, -extension.length) : filename;
+
+  if (!isJapanese(baseName)) {
     return { original: filename, translated: null };
   }
 
-  if (translationCache.has(filename)) {
-    return { original: filename, translated: translationCache.get(filename) };
+  if (translationCache.has(baseName)) {
+    const cached = translationCache.get(baseName);
+    return { original: filename, translated: cached ? `${cached}${extension}` : null };
   }
 
   try {
-    const result = await translate(filename, { to: 'en' });
-    translationCache.set(filename, result.text);
-    return { original: filename, translated: result.text };
+    const translate = await loadTranslateClient();
+    const result = await translate(baseName, { to: 'en' });
+    translationCache.set(baseName, result.text);
+    return { original: filename, translated: `${result.text}${extension}` };
   } catch (error) {
     return { original: filename, translated: null, error: error.message };
   }
