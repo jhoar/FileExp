@@ -5,7 +5,8 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "lint": "echo 'No lint configured'"
+    "lint": "echo 'No lint configured'",
+    "generate-translations": "node scripts/generate-translations.js"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.0",

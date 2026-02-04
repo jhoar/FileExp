@@ -35,6 +35,16 @@ body {
   min-width: 200px;
 }
 
+.toolbar__inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar__inline input {
+  min-width: 260px;
+}
+
 button {
   padding: 6px 12px;
   border-radius: 6px;

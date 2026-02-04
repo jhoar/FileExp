@@ -5,10 +5,13 @@ const refreshButton = document.getElementById('refresh');
 const programPathInput = document.getElementById('programPath');
 const programArgsInput = document.getElementById('programArgs');
 const saveConfigButton = document.getElementById('saveConfig');
+const translationDbPathInput = document.getElementById('translationDbPath');
+const browseTranslationDbButton = document.getElementById('browseTranslationDb');
+const loadTranslationDbButton = document.getElementById('loadTranslationDb');
 const status = document.getElementById('status');
 
 const STATE_KEY = 'fileexp_open_config';
-const TRANSLATION_CONFIG_KEY = 'fileexp_translation_config';
+const TRANSLATION_DB_KEY = 'fileexp_translation_db';
 
 const setStatus = (message, type = 'info') => {
   status.textContent = message;
@@ -27,16 +30,7 @@ const loadConfig = () => {
   }
 };
 
-const loadTranslationConfig = () => {
-  const saved = window.localStorage.getItem(TRANSLATION_CONFIG_KEY);
-  if (!saved) return null;
-  try {
-    return JSON.parse(saved);
-  } catch (error) {
-    console.warn('Failed to load translation config', error);
-    return null;
-  }
-};
+const loadTranslationDbPath = () => window.localStorage.getItem(TRANSLATION_DB_KEY);
 
 const saveConfig = () => {
   const payload = {
@@ -45,6 +39,25 @@ const saveConfig = () => {
   };
   window.localStorage.setItem(STATE_KEY, JSON.stringify(payload));
   setStatus('Open command saved.', 'success');
+};
+
+const saveTranslationDbPath = () => {
+  const value = translationDbPathInput.value.trim();
+  if (value) {
+    window.localStorage.setItem(TRANSLATION_DB_KEY, value);
+  } else {
+    window.localStorage.removeItem(TRANSLATION_DB_KEY);
+  }
+};
+
+const loadTranslationDb = async (filePath) => {
+  if (!filePath) return;
+  const response = await window.fileExp.loadTranslationDb(filePath);
+  if (!response.ok) {
+    setStatus(response.message || 'Failed to load translation DB.', 'error');
+    return;
+  }
+  setStatus(`Loaded ${response.count} translations`, 'success');
 };
 
 const getOpenConfig = () => ({
@@ -73,22 +86,22 @@ const renderEntries = async (directory, entries) => {
     listItem.appendChild(translated);
 
     if (!entry.isDirectory) {
-      console.info('Translation request queued', {
+      console.info('Translation lookup queued', {
         original: entry.name
       });
-      window.fileExp.translateFilename(entry.name).then((result) => {
+      window.fileExp.getTranslation(entry.fullPath).then((result) => {
         if (result?.translated) {
           translated.textContent = result.translated;
-          console.info('Translated filename', {
+          console.info('Translated filename (from DB)', {
             original: entry.name,
             translated: result.translated
           });
-        } else {
-          console.info('No translation for filename', {
-            original: entry.name,
-            reason: result?.error ? 'error' : 'skipped'
-          });
+          return;
         }
+        console.info('No translation for filename (DB)', {
+          original: entry.name,
+          status: result?.status || 'missing'
+        });
       });
     }
 
@@ -154,6 +167,18 @@ refreshButton.addEventListener('click', () => {
 
 saveConfigButton.addEventListener('click', saveConfig);
 
+browseTranslationDbButton.addEventListener('click', async () => {
+  const chosen = await window.fileExp.selectTranslationDb();
+  if (chosen) {
+    translationDbPathInput.value = chosen;
+  }
+});
+
+loadTranslationDbButton.addEventListener('click', async () => {
+  saveTranslationDbPath();
+  await loadTranslationDb(translationDbPathInput.value.trim());
+});
+
 currentPathInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     loadDirectory(currentPathInput.value.trim());
@@ -162,9 +187,10 @@ currentPathInput.addEventListener('keydown', (event) => {
 
 const initialize = async () => {
   loadConfig();
-  const translationConfig = loadTranslationConfig();
-  if (translationConfig) {
-    await window.fileExp.setTranslationConfig(translationConfig);
+  const savedDbPath = loadTranslationDbPath();
+  if (savedDbPath) {
+    translationDbPathInput.value = savedDbPath;
+    await loadTranslationDb(savedDbPath);
   }
   const initial = await window.fileExp.getInitialDirectory();
   await loadDirectory(initial);
