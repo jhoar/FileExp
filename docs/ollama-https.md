@@ -64,3 +64,17 @@ GET /health
 ```
 
 Returns the model name and status.
+
+## Using Ollama from the translation generator
+
+The translation generator supports switching to the Ollama HTTPS endpoint:
+
+```bash
+npm run generate-translations -- \
+  --input "D:\\Downloads\\Manga" \
+  --output translations.json \
+  --provider ollama \
+  --ollama-endpoint https://localhost:8443/translate \
+  --ollama-model shisa-v2.1-llama3.2-3b \
+  --ollama-cert certs/cert.pem
+```
