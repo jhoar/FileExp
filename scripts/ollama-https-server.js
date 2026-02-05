@@ -38,14 +38,15 @@ const callOllama = async ({ text, target }) => {
     target,
     text
   });
+  const payload = {
+    model: OLLAMA_MODEL,
+    prompt: buildPrompt(text, target),
+    stream: false
+  };
   const response = await fetch(`${OLLAMA_URL}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      prompt: buildPrompt(text, target),
-      stream: false
-    })
+    body: JSON.stringify(payload)
   });
 
   const body = await response.text();
@@ -53,6 +54,7 @@ const callOllama = async ({ text, target }) => {
     const error = new Error(`Ollama request failed with ${response.status}`);
     error.status = response.status;
     error.body = body;
+    error.requestBody = payload;
     throw error;
   }
 
@@ -96,7 +98,8 @@ const startServer = async () => {
       log('error', 'Translation failed', {
         message: error.message,
         status: error.status,
-        body: error.body
+        body: error.body,
+        requestBody: error.requestBody
       });
       return res.status(error.status || 500).json({
         ok: false,
