@@ -34,14 +34,19 @@ const createOllamaClient = ({ endpoint, model, certPath }) => {
       });
     }
 
+    const isProxyEndpoint = url.pathname.endsWith('/translate');
+    const payload = isProxyEndpoint
+      ? { text, target }
+      : {
+          model,
+          prompt: buildOllamaPrompt(text, target),
+          stream: false
+        };
+
     const response = await fetch(url.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        prompt: buildOllamaPrompt(text, target),
-        stream: false
-      }),
+      body: JSON.stringify(payload),
       dispatcher
     });
 
@@ -54,6 +59,9 @@ const createOllamaClient = ({ endpoint, model, certPath }) => {
     }
 
     const data = await response.json();
+    if (isProxyEndpoint) {
+      return data.translated?.trim() || '';
+    }
     return data.response?.trim() || '';
   };
 };

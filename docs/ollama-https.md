@@ -78,3 +78,7 @@ npm run generate-translations -- \
   --ollama-model shisa-v2.1-llama3.2-3b \
   --ollama-cert certs/cert.pem
 ```
+
+The generator detects `/translate` endpoints and sends `{ "text": "...", "target": "en" }`.
+If you point `--ollama-endpoint` at the native Ollama API (e.g. `http://localhost:11434/api/generate`),
+it will send the model/prompt payload instead.
