@@ -6,10 +6,14 @@
   "scripts": {
     "start": "electron .",
     "lint": "echo 'No lint configured'",
-    "generate-translations": "node scripts/generate-translations.js"
+    "generate-translations": "node scripts/generate-translations.js",
+    "generate-cert": "node scripts/generate-self-signed-cert.js",
+    "start-ollama-https": "node scripts/ollama-https-server.js"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.0",
+    "express": "^4.19.2",
+    "selfsigned": "^2.4.1",
     "shell-quote": "^1.8.1"
   },
   "devDependencies": {
