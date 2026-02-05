@@ -35,6 +35,7 @@ The server listens on `https://localhost:8443`.
 | `CERT_PATH` | `certs/cert.pem` | Custom cert path |
 | `KEY_PATH` | `certs/key.pem` | Custom key path |
 | `CERT_COMMON_NAME` | `localhost` | Used by the cert generator |
+| `OLLAMA_HTTPS_LOG_LEVEL` | `info` | Log level: `error`, `warn`, `info`, `debug` |
 
 ## Request format
 

@@ -8,7 +8,8 @@
     "lint": "echo 'No lint configured'",
     "generate-translations": "node scripts/generate-translations.js",
     "generate-cert": "node scripts/generate-self-signed-cert.js",
-    "start-ollama-https": "node scripts/ollama-https-server.js"
+    "start-ollama-https": "node scripts/ollama-https-server.js",
+    "test:ollama-https": "node scripts/test-ollama-https-server.js"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.0",
