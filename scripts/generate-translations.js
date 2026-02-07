@@ -15,6 +15,25 @@ const buildOllamaPrompt = (text, target) =>
   `Respond with only the translated filename and no extra text.\n\n` +
   `${text}`;
 
+const applySubstitutions = (text, substitutions) => {
+  if (!substitutions || Object.keys(substitutions).length === 0) return text;
+  let updated = text;
+  const orderedKeys = Object.keys(substitutions).sort((a, b) => b.length - a.length);
+  orderedKeys.forEach((key) => {
+    const value = substitutions[key];
+    if (!key) return;
+    updated = updated.split(key).join(value);
+  });
+  return updated;
+};
+
+const loadSubstitutions = async (filePath) => {
+  if (!filePath) return {};
+  const raw = await fs.readFile(filePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  return parsed && typeof parsed === 'object' ? parsed : {};
+};
+
 const createOllamaClient = ({ endpoint, model, certPath }) => {
   if (!endpoint) {
     throw new Error('Ollama endpoint is required.');
@@ -89,6 +108,7 @@ Options:
   --ollama-endpoint <url>    Ollama HTTPS endpoint (default: https://localhost:8443/translate)
   --ollama-model <name>      Ollama model (default: shisa-v2.1-llama3.2-3b)
   --ollama-cert <path>       Path to CA cert to trust self-signed Ollama HTTPS
+  --substitutions <path>     JSON map of replacements applied before translation
   --batch-size <n>         Number of files per translation batch (default: 100)
   --batch-delay <ms>       Delay between batches in ms (default: 1000)
   --rate-limit-delay <ms>  Delay after 429 errors in ms (default: 5000)
@@ -145,6 +165,8 @@ const run = async () => {
   const ollamaEndpoint = args['ollama-endpoint'] || 'https://localhost:8443/translate';
   const ollamaModel = args['ollama-model'] || 'shisa-v2.1-llama3.2-3b';
   const ollamaCert = args['ollama-cert'];
+  const substitutionsPath = args.substitutions;
+  const substitutions = await loadSubstitutions(substitutionsPath);
 
   const { entries: existingEntries } = await loadExistingDb(outputFile);
   const entryMap = new Map();
@@ -208,10 +230,11 @@ const run = async () => {
       const results = await Promise.all(
         pending.map(async (item) => {
           try {
+            const normalizedBaseName = applySubstitutions(item.baseName, substitutions);
             const translatedText =
               provider === 'ollama'
-                ? await translate(item.baseName, 'en')
-                : (await translate(item.baseName, { to: 'en' })).text;
+                ? await translate(normalizedBaseName, 'en')
+                : (await translate(normalizedBaseName, { to: 'en' })).text;
             updateEntry(entryMap, item.filePath, {
               file_path: item.filePath,
               file_name: item.fileName,

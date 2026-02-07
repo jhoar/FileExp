@@ -36,6 +36,7 @@ The server listens on `https://localhost:8443`.
 | `KEY_PATH` | `certs/key.pem` | Custom key path |
 | `CERT_COMMON_NAME` | `localhost` | Used by the cert generator |
 | `OLLAMA_HTTPS_LOG_LEVEL` | `info` | Log level: `error`, `warn`, `info`, `debug` |
+| `OLLAMA_SUBSTITUTIONS_PATH` | - | JSON substitutions applied before translation |
 
 ## Request format
 
@@ -83,3 +84,35 @@ npm run generate-translations -- \
 The generator detects `/translate` endpoints and sends `{ "text": "...", "target": "en" }`.
 If you point `--ollama-endpoint` at the native Ollama API (e.g. `http://localhost:11434/api/generate`),
 it will send the model/prompt payload instead.
+
+## Standard substitutions (optional)
+
+You can provide a JSON file with text replacements to normalize common phrases before translation.
+
+Example `substitutions.json`:
+
+```json
+{
+  "DL版": "digital version",
+  "ブルーアーカイブ": "Blue Archive"
+}
+```
+
+Generator usage:
+
+```bash
+npm run generate-translations -- \
+  --input "D:\\Downloads\\Manga" \
+  --output translations.json \
+  --provider ollama \
+  --ollama-endpoint https://localhost:8443/translate \
+  --ollama-model shisa-v2.1-llama3.2-3b \
+  --ollama-cert certs/cert.pem \
+  --substitutions substitutions.json
+```
+
+Server usage:
+
+```bash
+OLLAMA_SUBSTITUTIONS_PATH=substitutions.json npm run start-ollama-https
+```

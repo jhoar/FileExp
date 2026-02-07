@@ -10,6 +10,7 @@ const CERT_PATH = process.env.CERT_PATH || path.join(CERT_DIR, 'cert.pem');
 const KEY_PATH = process.env.KEY_PATH || path.join(CERT_DIR, 'key.pem');
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'shisa-v2.1-llama3.2-3b';
+const OLLAMA_SUBSTITUTIONS_PATH = process.env.OLLAMA_SUBSTITUTIONS_PATH;
 
 const LOG_LEVEL = (process.env.OLLAMA_HTTPS_LOG_LEVEL || 'info').toLowerCase();
 
@@ -27,20 +28,45 @@ const log = (level, message, payload) => {
   }
 };
 
+const applySubstitutions = (text, substitutions) => {
+  if (!substitutions || Object.keys(substitutions).length === 0) return text;
+  let updated = text;
+  const orderedKeys = Object.keys(substitutions).sort((a, b) => b.length - a.length);
+  orderedKeys.forEach((key) => {
+    const value = substitutions[key];
+    if (!key) return;
+    updated = updated.split(key).join(value);
+  });
+  return updated;
+};
+
+const loadSubstitutions = async (filePath) => {
+  if (!filePath) return {};
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    log('warn', 'Failed to load substitutions', { message: error.message, path: filePath });
+    return {};
+  }
+};
+
 const buildPrompt = (text, target) =>
   `Translate the following filename into ${target}. ` +
   `Respond with only the translated filename and no extra text.\n\n` +
   `${text}`;
 
-const callOllama = async ({ text, target }) => {
+const callOllama = async ({ text, target, substitutions }) => {
+  const normalizedText = applySubstitutions(text, substitutions);
   log('debug', 'Ollama request payload', {
     model: OLLAMA_MODEL,
     target,
-    text
+    text: normalizedText
   });
   const payload = {
     model: OLLAMA_MODEL,
-    prompt: buildPrompt(text, target),
+    prompt: buildPrompt(normalizedText, target),
     stream: false
   };
   const response = await fetch(`${OLLAMA_URL}/api/generate`, {
@@ -79,6 +105,11 @@ const startServer = async () => {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
 
+  const substitutions = await loadSubstitutions(OLLAMA_SUBSTITUTIONS_PATH);
+  if (Object.keys(substitutions).length > 0) {
+    log('info', 'Loaded substitutions', { count: Object.keys(substitutions).length });
+  }
+
   app.get('/health', (_req, res) => {
     res.json({ ok: true, model: OLLAMA_MODEL });
   });
@@ -91,7 +122,7 @@ const startServer = async () => {
     }
 
     try {
-      const translated = await callOllama({ text, target });
+      const translated = await callOllama({ text, target, substitutions });
       log('info', 'Translation success', { target, length: translated.length });
       return res.json({ ok: true, translated });
     } catch (error) {
