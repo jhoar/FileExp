@@ -59,7 +59,7 @@ const buildPrompt = (text, target) =>
 
 const callOllama = async ({ text, target, substitutions }) => {
   const normalizedText = applySubstitutions(text, substitutions);
-  log('debug', 'Ollama request payload', {
+  console.info('Ollama translation request', {
     model: OLLAMA_MODEL,
     target,
     text: normalizedText
@@ -93,7 +93,14 @@ const callOllama = async ({ text, target, substitutions }) => {
     parseError.body = body;
     throw parseError;
   }
-  return data.response?.trim() || '';
+  const translated = data.response?.trim() || '';
+  console.info('Ollama translation response', {
+    model: OLLAMA_MODEL,
+    target,
+    text: normalizedText,
+    translated
+  });
+  return translated;
 };
 
 const startServer = async () => {
